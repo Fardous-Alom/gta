@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "remixicon/fonts/remixicon.css";
+gsap.registerPlugin(ScrollTrigger);
 
 function App() {
   let [showContent, setShowContent] = useState(false);
   useGSAP(() => {
     const tl = gsap.timeline();
-
     tl.to(".vi-mask-group", {
       rotate: 10,
       duration: 2,
@@ -29,71 +30,117 @@ function App() {
       },
     });
   });
-
+  // Animation for the initial page load
   useGSAP(() => {
     if (!showContent) return;
 
-    gsap.to(".main", {
-      scale: 1,
-      rotate: 0,
-      duration: 2,
-      delay: "-1",
-      ease: "Expo.easeInOut",
-    });
+    // Main animations
+    const mainTimeline = gsap.timeline();
+    
+    mainTimeline
+      .to(".main", {
+        scale: 1,
+        rotate: 0,
+        duration: 2,
+        ease: "Expo.easeInOut",
+      })
+      .to(
+        [".sky", ".bg"],
+        {
+          scale: 1.1,
+          rotate: 0,
+          duration: 2,
+          ease: "Expo.easeInOut",
+        },
+        "-=1.8"
+      )
+      .to(
+        ".character",
+        {
+          scale: 1.4,
+          x: "-50%",
+          bottom: "-25%",
+          rotate: 0,
+          duration: 2,
+          ease: "Expo.easeInOut",
+        },
+        "-=.8"
+      )
+      .to(
+        ".text",
+        {
+          scale: 1,
+          rotate: 0,
+          duration: 2,
+          ease: "Expo.easeInOut",
+        },
+        "-=.8"
+      );
 
-    gsap.to(".sky", {
-      scale: 1.1,
-      rotate: 0,
-      duration: 2,
-      delay: "-.8",
-      ease: "Expo.easeInOut",
-    });
+    // Scroll-based animations
+    const scrollAnimations = [
+      {
+        target: ".hero-img",
+        scale: 1.3,
+        trigger: ".hero-img",
+        start: "top 80%",
+        end: "bottom top"
+      },
+      {
+        target: ".vice-card",
+        scale: 1.2,
+        trigger: ".vice-card",
+        start: "top 80%",
+        end: "bottom top"
+      },
+      {
+        target: ".vice-img",
+        scale: 1.2,
+        trigger: ".vice-img",
+        start: "top 80%",
+        end: "bottom top"
+      }
+    ];
 
-    gsap.to(".bg", {
-      scale: 1.1,
-      rotate: 0,
-      duration: 2,
-      delay: "-.8",
-      ease: "Expo.easeInOut",
-    });
+    const scrollTriggers = scrollAnimations.map(anim => 
+      gsap.fromTo(
+        anim.target,
+        { scale: 1 },
+        {
+          scale: anim.scale,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: anim.trigger,
+            start: anim.start,
+            end: anim.end,
+            scrub: true,
+          },
+        }
+      )
+    );
 
-    gsap.to(".character", {
-      scale: 1.4,
-      x: "-50%",
-      bottom: "-25%",
-      rotate: 0,
-      duration: 2,
-      delay: "-.8",
-      ease: "Expo.easeInOut",
-    });
-
-    gsap.to(".text", {
-      scale: 1,
-      rotate: 0,
-      duration: 2,
-      delay: "-.8",
-      ease: "Expo.easeInOut",
-    });
-
+    // Mouse move effect
     const main = document.querySelector(".main");
-
-    main?.addEventListener("mousemove", function (e) {
+    const handleMouseMove = (e) => {
       const xMove = (e.clientX / window.innerWidth - 0.5) * 40;
-      gsap.to(".main .text", {
-        x: `${xMove * 0.4}%`,
-      });
-      gsap.to(".sky", {
-        x: xMove,
-      });
-      gsap.to(".bg", {
-        x: xMove * 1.7,
-      });
-    });
+      gsap.to(".main .text", { x: `${xMove * 0.4}%` });
+      gsap.to(".sky", { x: xMove });
+      gsap.to(".bg", { x: xMove * 1.7 });
+    };
+
+    main?.addEventListener("mousemove", handleMouseMove);
+
+    // Cleanup function
+    return () => {
+      main?.removeEventListener("mousemove", handleMouseMove);
+      scrollTriggers.forEach(trigger => trigger.scrollTrigger?.kill());
+      mainTimeline.kill();
+    };
   }, [showContent]);
 
   return (
     <>
-      <div className="svg flex items-center justify-center fixed top-0 left-0 z-[100] w-full h-screen overflow-hidden bg-[#000]">
+      <section className="svg flex items-center justify-center fixed top-0 left-0 z-[100] w-full h-screen overflow-hidden bg-[#000]">
         <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
           <defs>
             <mask id="viMask">
@@ -121,10 +168,10 @@ function App() {
             mask="url(#viMask)"
           />
         </svg>
-      </div>
+      </section>
       {showContent && (
         <div className="main w-full rotate-[-10deg] scale-[1.7]">
-          <div className="landing overflow-hidden relative w-full h-screen bg-black">
+          <section className="landing overflow-hidden relative w-full h-screen bg-black">
             <div className="navbar absolute top-0 left-0 z-[10] w-full py-10 px-10">
               <div className="logo flex gap-7">
                 <div className="lines flex flex-col gap-[5px]">
@@ -155,7 +202,7 @@ function App() {
                 <h1 className="text-[12rem] leading-none -ml-40">auto</h1>
               </div>
               <img
-                className="absolute character -bottom-[150%] left-1/2 -translate-x-1/2  scale-[3] rotate-[-20deg]"
+                className="absolute character -bottom-[150%] left-1/2 -translate-x-1/2  scale-[3] rotate-[-20deg] lg:w-1/3 "
                 src="./girlbg.png"
                 alt=""
               />
@@ -173,47 +220,89 @@ function App() {
                 alt=""
               />
             </div>
-          </div>
-          <div className="w-full h-screen flex items-center justify-center bg-black">
-            <div className="cntnr flex text-white w-full h-[80%] ">
-              <div className="limg relative w-1/2 h-full">
-                <img
-                  className="absolute scale-[1.3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                  src="./imag.png"
-                  alt=""
-                />
-              </div>
-              <div className="rg w-[30%] py-30">
-                <h1 className="text-8xl">Still Running,</h1>
-                <h1 className="text-8xl">Not Hunting</h1>
-                <p className="mt-10 text-xl font-[Helvetica_Now_Display]">
-                  Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                  Distinctio possimus, asperiores nam, omnis inventore nesciunt
-                  a architecto eveniet saepe, ducimus necessitatibus at
-                  voluptate.
-                </p>
-                <p className="mt-3 text-xl font-[Helvetica_Now_Display]">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit. At
-                  eius illum fugit eligendi nesciunt quia similique velit
-                  excepturi soluta tenetur illo repellat consectetur laborum
-                  eveniet eaque, dicta, hic quisquam? Ex cupiditate ipsa nostrum
-                  autem sapiente.
-                </p>
-                <p className="mt-10 text-xl font-[Helvetica_Now_Display]">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit. At
-                  eius illum fugit eligendi nesciunt quia similique velit
-                  excepturi soluta tenetur illo repellat consectetur laborum
-                  eveniet eaque, dicta, hic quisquam? Ex cupiditate ipsa nostrum
-                  autem sapiente.
-                </p>
-                <button className="bg-yellow-500 px-10 py-10 text-black mt-10 text-4xl">
-                  Download Now
-                </button>
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
       )}
+      
+      <section className="w-full min-h-screen flex items-center justify-center bg-black px-6">
+        <div className="cntnr flex flex-col-reverse lg:flex-row items-center text-white w-full max-w-7xl">
+          {/* Right Content */}
+          <div className="rg w-full lg:w-1/2 mt-12 lg:mt-0 space-y-6 text-center lg:text-left">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+              Still Running,
+            </h1>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-yellow-400">
+              Not Hunting
+            </h1>
+
+            <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
+              {" "}
+              Experience the chaos, freedom, and thrill of the most immersive
+              GTA world yet. Bigger, bolder, and crazier — Vice City has never
+              looked this alive.
+            </p>
+            <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
+              {" "}
+              Customize your story, build your empire, and explore a city that
+              never sleeps. Every street corner hides an opportunity — or a
+              trap.
+            </p>
+            <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
+              {" "}
+              From fast cars to fast money, this is GTA VI — where legends are
+              made, and rules are broken.
+            </p>
+
+            <button className="bg-yellow-500 hover:bg-yellow-400 transition-colors px-8 py-4 rounded-2xl text-black mt-8 text-2xl font-bold shadow-xl">
+              Download Now
+            </button>
+          </div>
+
+          {/* Left Image */}
+          <div className="limg relative w-full lg:w-1/2 flex justify-center">
+            <img
+              className="hero-img max-w-full h-auto object-cover"
+              src="./imag.png"
+              alt="GTA VI Hero"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full min-h-screen flex flex-col items-center justify-center bg-black px-6 py-20">
+        {/* Top Branding */}
+        <div className="text-center text-white max-w-2xl">
+          <h3 className="text-4xl font-bold flex items-center justify-center gap-2">
+            <span className="uppercase">Visit Leonida</span>
+            <span className="text-yellow-300">☀</span>
+          </h3>
+          <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
+            {" "}
+            Tour a few of the must-see destinations across the sunshine state.
+          </p>
+        </div>
+
+        {/* Image Card */}
+        <div className="vice-card relative mt-12 w-full max-w-4xl shadow-2xl border-8 border-white overflow-hidden">
+          <img
+            className="w-full h-auto object-cover"
+            src="./gtavi.png"
+            alt="Vice City"
+          />
+
+          {/* Overlay Content */}
+          <div className="absolute bottom-6 left-6">
+            <h2 className="text-white text-5xl md:text-6xl font-extrabold italic drop-shadow-lg">
+              Vice City
+            </h2>
+          </div>
+
+          {/* Button */}
+          <button className="absolute bottom-6 right-6 bg-white text-black px-6 py-2 rounded-full shadow-md font-semibold hover:bg-gray-100 transition">
+            Explore Vice City
+          </button>
+        </div>
+      </section>
     </>
   );
 }

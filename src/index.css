@@ -4,6 +4,15 @@
   font-family: "pricedown";
   src: url("./pricedown.otf");
 }
+@font-face {
+  font-family: "rajdhani";
+  src: url("./rajdhani.ttf");
+}
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("./bebasneue.ttf");
+}
+
 
 html,
 body {
