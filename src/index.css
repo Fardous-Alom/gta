@@ -2,15 +2,17 @@
 
 @font-face {
   font-family: "pricedown";
-  src: url("./pricedown.otf");
+  src: url("/fonts/pricedown/pricedown.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: "rajdhani";
-  src: url("./rajdhani.ttf");
-}
-@font-face {
-  font-family: "Bebas Neue";
-  src: url("./bebasneue.ttf");
+  src: url("/fonts/rajdhani/rajdhani.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
 
