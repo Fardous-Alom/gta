@@ -1,14 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "remixicon/fonts/remixicon.css";
-gsap.registerPlugin(ScrollTrigger);
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
 
 function App() {
-  let [showContent, setShowContent] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const smoother = useRef(null);
+  const contentRef = useRef(null);
+
+  // Initialize ScrollSmoother
+  useGSAP(() => {
+    if (showContent) {
+      smoother.current = ScrollSmoother.create({
+        wrapper: "#smooth-wrapper",
+        content: "#smooth-content",
+        smooth: 1.5,
+        effects: true,
+        smoothTouch: 0.1,
+        normalizeScroll: true,
+      });
+
+      // Add scroll-triggered animation for the Vice City card
+      gsap.utils.toArray('.vice-card').forEach((card) => {
+        const img = card.querySelector('img');
+        
+        // Scale up image on scroll
+        gsap.to(img, {
+          scale: 1.1,
+          scrollTrigger: {
+            trigger: card,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 1,
+            onUpdate: (self) => {
+              // Parallax effect
+              const y = self.scroll() * 100;
+              gsap.set(img, { y: -y * 0.5 });
+              
+              // Tilt effect on hover
+              card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width - 0.5) * 20;
+                const y = ((e.clientY - rect.top) / rect.height - 0.5) * 20;
+                gsap.to(card, {
+                  rotateY: x * 0.5,
+                  rotateX: -y * 0.5,
+                  duration: 0.5,
+                  ease: "power2.out"
+                });
+              });
+
+              // Reset on mouse leave
+              card.addEventListener('mouseleave', () => {
+                gsap.to(card, {
+                  rotateY: 0,
+                  rotateX: 0,
+                  duration: 0.5,
+                  ease: "power2.out"
+                });
+              });
+            }
+          }
+        });
+      });
+    }
+    
+    return () => {
+      if (smoother.current) {
+        smoother.current.kill();
+      }
+    };
+  }, [showContent]);
   useGSAP(() => {
     const tl = gsap.timeline();
+
     tl.to(".vi-mask-group", {
       rotate: 10,
       duration: 2,
@@ -30,116 +100,72 @@ function App() {
       },
     });
   });
-  // Animation for the initial page load
+
   useGSAP(() => {
     if (!showContent) return;
 
-    // Main animations
-    const mainTimeline = gsap.timeline();
-    
-    mainTimeline
-      .to(".main", {
-        scale: 1,
-        rotate: 0,
-        duration: 2,
-        ease: "Expo.easeInOut",
-      })
-      .to(
-        [".sky", ".bg"],
-        {
-          scale: 1.1,
-          rotate: 0,
-          duration: 2,
-          ease: "Expo.easeInOut",
-        },
-        "-=1.8"
-      )
-      .to(
-        ".character",
-        {
-          scale: 1.4,
-          x: "-50%",
-          bottom: "-25%",
-          rotate: 0,
-          duration: 2,
-          ease: "Expo.easeInOut",
-        },
-        "-=.8"
-      )
-      .to(
-        ".text",
-        {
-          scale: 1,
-          rotate: 0,
-          duration: 2,
-          ease: "Expo.easeInOut",
-        },
-        "-=.8"
-      );
+    gsap.to(".main", {
+      scale: 1,
+      rotate: 0,
+      duration: 2,
+      delay: "-1",
+      ease: "Expo.easeInOut",
+    });
 
-    // Scroll-based animations
-    const scrollAnimations = [
-      {
-        target: ".hero-img",
-        scale: 1.3,
-        trigger: ".hero-img",
-        start: "top 80%",
-        end: "bottom top"
-      },
-      {
-        target: ".vice-card",
-        scale: 1.2,
-        trigger: ".vice-card",
-        start: "top 80%",
-        end: "bottom top"
-      },
-      {
-        target: ".vice-img",
-        scale: 1.2,
-        trigger: ".vice-img",
-        start: "top 80%",
-        end: "bottom top"
-      }
-    ];
+    gsap.to(".sky", {
+      scale: 1.1,
+      rotate: 0,
+      duration: 2,
+      delay: "-.8",
+      ease: "Expo.easeInOut",
+    });
 
-    const scrollTriggers = scrollAnimations.map(anim => 
-      gsap.fromTo(
-        anim.target,
-        { scale: 1 },
-        {
-          scale: anim.scale,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: anim.trigger,
-            start: anim.start,
-            end: anim.end,
-            scrub: true,
-          },
-        }
-      )
-    );
+    gsap.to(".bg", {
+      scale: 1.1,
+      rotate: 0,
+      duration: 2,
+      delay: "-.8",
+      ease: "Expo.easeInOut",
+    });
 
-    // Mouse move effect
+    gsap.to(".character", {
+      scale: 1.4,
+      x: "-50%",
+      bottom: "-25%",
+      rotate: 0,
+      duration: 2,
+      delay: "-.8",
+      ease: "Expo.easeInOut",
+    });
+
+    gsap.to(".text", {
+      scale: 1,
+      rotate: 0,
+      duration: 2,
+      delay: "-.8",
+      ease: "Expo.easeInOut",
+    });
+
     const main = document.querySelector(".main");
-    const handleMouseMove = (e) => {
+
+    main?.addEventListener("mousemove", function (e) {
       const xMove = (e.clientX / window.innerWidth - 0.5) * 40;
-      gsap.to(".main .text", { x: `${xMove * 0.4}%` });
-      gsap.to(".sky", { x: xMove });
-      gsap.to(".bg", { x: xMove * 1.7 });
-    };
-
-    main?.addEventListener("mousemove", handleMouseMove);
-
-    // Cleanup function
-    return () => {
-      main?.removeEventListener("mousemove", handleMouseMove);
-      scrollTriggers.forEach(trigger => trigger.scrollTrigger?.kill());
-      mainTimeline.kill();
-    };
+      gsap.to(".main .text", {
+        x: `${xMove * 0.4}%`,
+      });
+      gsap.to(".sky", {
+        x: xMove,
+      });
+      gsap.to(".bg", {
+        x: xMove * 1.7,
+      });
+    });
   }, [showContent]);
 
   return (
     <>
+      <div id="smooth-wrapper">
+        <div id="smooth-content" ref={contentRef}>
       <section className="svg flex items-center justify-center fixed top-0 left-0 z-[100] w-full h-screen overflow-hidden bg-[#000]">
         <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
           <defs>
@@ -161,7 +187,7 @@ function App() {
             </mask>
           </defs>
           <image
-            href="./bg.png"
+            href="./"
             width="100%"
             height="100%"
             preserveAspectRatio="xMidYMid slice"
@@ -169,9 +195,10 @@ function App() {
           />
         </svg>
       </section>
+
       {showContent && (
         <div className="main w-full rotate-[-10deg] scale-[1.7]">
-          <section className="landing overflow-hidden relative w-full h-screen bg-black">
+          <div className="landing overflow-hidden relative w-full h-screen bg-black">
             <div className="navbar absolute top-0 left-0 z-[10] w-full py-10 px-10">
               <div className="logo flex gap-7">
                 <div className="lines flex flex-col gap-[5px]">
@@ -202,29 +229,36 @@ function App() {
                 <h1 className="text-[12rem] leading-none -ml-40">auto</h1>
               </div>
               <img
-                className="absolute character -bottom-[150%] left-1/2 -translate-x-1/2  scale-[3] rotate-[-20deg] lg:w-1/3 "
+                className="absolute character w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] h-auto -bottom-[150%] md:-bottom-[120%] left-1/2 -translate-x-1/2 scale-[2] md:scale-[1.8] lg:scale-[1.5] xl:scale-[1.2] rotate-[-20deg] transform-gpu"
                 src="./girlbg.png"
-                alt=""
+                alt="Character"
+                style={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxHeight: '80vh',
+                  objectFit: 'contain',
+                  objectPosition: 'bottom center',
+                }}
               />
             </div>
             <div className="btmbar text-white absolute bottom-0 left-0 w-full py-15 px-10 bg-gradient-to-t from-black to-transparent">
-              <div className="flex gap-4 items-center">
+              {/* <div className="flex gap-4 items-center">
                 <i className="text-4xl ri-arrow-down-line"></i>
-                <h3 className="text-xl font-[Helvetica_Now_Display]">
+                <h3 className="text-xl sm:mt-5">
                   Scroll Down
                 </h3>
-              </div>
+              </div> */}
               <img
                 className="absolute h-[55px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                 src="./ps5.png"
                 alt=""
               />
             </div>
-          </section>
+          </div>
         </div>
       )}
-      
-      <section className="w-full min-h-screen flex items-center justify-center bg-black px-6">
+
+      <section className="w-full min-h-screen flex items-center justify-center bg-black px-12">
         <div className="cntnr flex flex-col-reverse lg:flex-row items-center text-white w-full max-w-7xl">
           {/* Right Content */}
           <div className="rg w-full lg:w-1/2 mt-12 lg:mt-0 space-y-6 text-center lg:text-left">
@@ -237,20 +271,14 @@ function App() {
 
             <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
               {" "}
-              Experience the chaos, freedom, and thrill of the most immersive
-              GTA world yet. Bigger, bolder, and crazier — Vice City has never
-              looked this alive.
+              Experience the chaos, freedom, and thrill of the most immersive GTA world yet. Bigger, bolder, and crazier — Vice City has never looked this alive. Customize your story, build your empire, and explore a city that never sleeps. Every street corner hides an opportunity — or a trap.
             </p>
             <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
               {" "}
-              Customize your story, build your empire, and explore a city that
-              never sleeps. Every street corner hides an opportunity — or a
-              trap.
             </p>
             <p className="mt-6 text-lg md:text-xl font-rajdhani font-medium text-gray-100 leading-relaxed tracking-wide">
               {" "}
-              From fast cars to fast money, this is GTA VI — where legends are
-              made, and rules are broken.
+              From fast cars to fast money, this is GTA VI — where legends are made, and rules are broken.
             </p>
 
             <button className="bg-yellow-500 hover:bg-yellow-400 transition-colors px-8 py-4 rounded-2xl text-black mt-8 text-2xl font-bold shadow-xl">
@@ -283,16 +311,23 @@ function App() {
         </div>
 
         {/* Image Card */}
-        <div className="vice-card relative mt-12 w-full max-w-4xl shadow-2xl border-8 border-white overflow-hidden">
-          <img
-            className="w-full h-auto object-cover"
-            src="./gtavi.png"
-            alt="Vice City"
-          />
+        <div 
+          ref={contentRef}
+          className="vice-card relative mt-12 w-full max-w-4xl shadow-2xl border-8 border-white overflow-hidden"
+          data-speed="0.8"
+        >
+          <div className="overflow-hidden">
+            <img
+              className="w-full h-auto object-cover will-change-transform"
+              src="./gtavi.png"
+              alt="Vice City"
+              data-speed="1.2"
+            />
+          </div>
 
           {/* Overlay Content */}
           <div className="absolute bottom-6 left-6">
-            <h2 className="text-white text-5xl md:text-6xl font-extrabold italic drop-shadow-lg">
+            <h2 className="text-white text-5xl md:text-6xl font-extrabold italic drop-shadow-lg hidden md:block">
               Vice City
             </h2>
           </div>
@@ -303,6 +338,8 @@ function App() {
           </button>
         </div>
       </section>
+        </div>
+      </div>
     </>
   );
 }
