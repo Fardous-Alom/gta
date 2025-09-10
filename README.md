@@ -27,8 +27,8 @@ A **personal portfolio project** built to showcase modern frontend development s
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/gta-vi-landing-page.git
-   cd gta-vi-landing-page
+   git clone https://github.com/Fardous-Alom/gta.git
+   cd gta
    ```
 
 2. **Install dependencies**
